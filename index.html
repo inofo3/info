@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TikTok Liteに参加しよう">
+  <meta name="twitter:description" content="今すぐTikTok Liteをはじめよう！">
+  <meta name="twitter:image" content="https://inofo3.github.io/info/card.jpg">
+
+  <!-- OGP -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TikTok Liteに参加しよう">
+  <meta property="og:description" content="今すぐTikTok Liteをはじめよう！">
+  <meta property="og:image" content="https://inofo3.github.io/info/card.jpg">
+  <meta property="og:url" content="https://inofo3.github.io/info/">
+
+  <title>TikTok Liteに参加しよう</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 24px;
+    }
+    .icon { font-size: 64px; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+    .sub { color: #888; font-size: 14px; margin-bottom: 36px; line-height: 1.6; }
+    .btn {
+      background: linear-gradient(135deg, #ff0050, #ff4081);
+      color: #fff;
+      text-decoration: none;
+      padding: 16px 48px;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      display: inline-block;
+      box-shadow: 0 4px 20px rgba(255,0,80,0.4);
+      transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .hint {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.8;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid #333;
+      border-top-color: #ff0050;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="spinner" id="spinner"></div>
+  <div class="icon" id="icon" style="display:none">🎵</div>
+  <h1>TikTok Liteに参加しよう</h1>
+  <p class="sub" id="sub">リダイレクト中...</p>
+
+  <a href="https://lite.tiktok.com/t/ZS9N2FKHQ15Pd-NM1zm/" class="btn" id="openBtn" style="display:none">
+    今すぐ開く
+  </a>
+  <p class="hint" id="hint"></p>
+
+  <script>
+    var REDIRECT_URL = 'https://lite.tiktok.com/t/ZS9N2FKHQ15Pd-NM1zm/';
+    var ua = navigator.userAgent;
+    var isAndroid = /Android/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua);
+    var isTwitter = /Twitter/i.test(ua);
+
+    function showFallback(msg) {
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('icon').style.display = 'block';
+      document.getElementById('sub').textContent = '以下のボタンをタップしてください';
+      document.getElementById('openBtn').style.display = 'inline-block';
+      document.getElementById('hint').innerHTML = msg || '';
+    }
+
+    function doRedirect() {
+      if (isAndroid) {
+        // Android: intent scheme でChromeを強制起動
+        var intentUrl = 'intent://' + REDIRECT_URL.replace(/^https?:\/\//, '') +
+          '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
+          encodeURIComponent(REDIRECT_URL) + ';end';
+        window.location.href = intentUrl;
+        setTimeout(function () {
+          showFallback('ブラウザが開かない場合は下のボタンをタップ');
+        }, 2000);
+
+      } else if (isIOS && isTwitter) {
+        // iOS Twitter内ブラウザ: window.openで脱出を試みる
+        var newWin = window.open(REDIRECT_URL, '_blank');
+        if (newWin) {
+          setTimeout(function () { newWin.focus(); }, 100);
+          showFallback('');
+        } else {
+          showFallback('ボタンを<strong>長押し</strong>→「Safariで開く」をタップ');
+        }
+
+      } else {
+        // その他 (PC, Safariなど)
+        window.location.href = REDIRECT_URL;
+      }
+    }
+
+    // 500ms後に自動リダイレクト開始
+    setTimeout(doRedirect, 500);
+
+    // ボタンタップ時
+    document.getElementById('openBtn').addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isAndroid) {
+        var intentUrl = 'intent://' + REDIRECT_URL.replace(/^https?:\/\//, '') +
+          '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
+          encodeURIComponent(REDIRECT_URL) + ';end';
+        window.location.href = intentUrl;
+        setTimeout(function () { window.location.href = REDIRECT_URL; }, 2000);
+      } else {
+        window.open(REDIRECT_URL, '_blank') || (window.location.href = REDIRECT_URL);
+      }
+    });
+  </script>
+</body>
+</html>
