@@ -95,17 +95,17 @@
     .history-img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #21262d; }
     .history-info { flex: 1; min-width: 0; }
     .history-url { font-size: 12px; color: #58a6ff; word-break: break-all; }
-    .stats-row { display: flex; gap: 14px; margin-top: 5px; }
-    .stat { font-size: 12px; }
+    .stats-row { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; }
+    .stat { font-size: 13px; font-weight: bold; }
     .stat-pv { color: #56d364; }
     .stat-ct { color: #58a6ff; }
     .stat-ctr { color: #e3b341; }
-    .history-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .history-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
     .history-copy, .history-del, .history-graph {
       border: 1px solid #30363d;
       border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
+      padding: 6px 12px;
+      font-size: 13px;
       cursor: pointer;
     }
     .history-copy { background: #21262d; color: #e6edf3; }
@@ -114,11 +114,10 @@
     .history-graph:hover { background: #0c2233; }
     .history-del { background: none; color: #8b949e; }
     .history-del:hover { border-color: #da3633; color: #f85149; }
-    .chart-panel { display: none; margin-top: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 14px; }
+    .chart-panel { display: none; margin-top: 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 16px; }
     .chart-panel.show { display: block; }
-    .chart-title { font-size: 11px; color: #8b949e; margin-bottom: 10px; }
-    .chart-range { display: flex; gap: 6px; margin-bottom: 10px; }
-    .range-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; }
+    .chart-range { display: flex; gap: 6px; margin-bottom: 14px; }
+    .range-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 6px; padding: 5px 14px; font-size: 12px; cursor: pointer; }
     .range-btn.active { background: #0c2233; border-color: #58a6ff; color: #58a6ff; }
     .no-history { color: #484f58; font-size: 13px; }
     .toggle-pat { background: none; border: none; color: #58a6ff; font-size: 12px; cursor: pointer; margin-left: 6px; }
@@ -126,7 +125,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>カード作成 <span style="font-size:12px;color:#484f58;font-weight:normal;">v1.0</span></h1>
+    <h1>カード作成 <span style="font-size:12px;color:#484f58;font-weight:normal;">v1.2</span></h1>
     <p class="desc">画像を選ぶだけでツイッター用リンクを生成します</p>
 
     <div class="card">
@@ -426,7 +425,7 @@
               '<button class="range-btn" onclick="changeRange(' + i + ', 72, this)">3日</button>' +
               '<button class="range-btn" onclick="changeRange(' + i + ', 168, this)">7日</button>' +
             '</div>' +
-            '<canvas id="chart-' + i + '" height="160"></canvas>' +
+            '<canvas id="chart-' + i + '" height="220"></canvas>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -435,7 +434,8 @@
         var folder = item.folder || folderFromUrl(item.url);
         if (!folder) return;
         fetchStats(folder).then(function(s) {
-          var ctr = s.pv > 0 ? (s.ct / s.pv * 100).toFixed(1) + '%' : '0.0%';
+          var ctrVal = s.pv > 0 ? Math.min(s.ct / s.pv * 100, 100).toFixed(1) : '0.0';
+          var ctr = ctrVal + '%';
           var statsEl = document.getElementById('stats-' + i);
           if (statsEl) statsEl.innerHTML =
             '<span class="stat stat-pv">PV: ' + s.pv + '</span>' +
@@ -510,11 +510,14 @@
         options: {
           responsive: true,
           plugins: {
-            legend: { labels: { color: '#8b949e', font: { size: 11 } } }
+            legend: {
+              position: 'top',
+              labels: { color: '#e6edf3', font: { size: 13 }, padding: 16, boxWidth: 14 }
+            }
           },
           scales: {
-            x: { ticks: { color: '#484f58', font: { size: 10 }, maxTicksLimit: 12 }, grid: { color: '#21262d' } },
-            y: { ticks: { color: '#484f58', font: { size: 10 } }, grid: { color: '#21262d' }, beginAtZero: true }
+            x: { ticks: { color: '#8b949e', font: { size: 11 }, maxTicksLimit: 8 }, grid: { color: '#21262d' } },
+            y: { ticks: { color: '#8b949e', font: { size: 11 }, precision: 0 }, grid: { color: '#21262d' }, beginAtZero: true }
           }
         }
       });
