@@ -402,6 +402,7 @@
       charts = {};
 
       el.innerHTML = list.map(function (item, i) {
+        var folder = item.folder || folderFromUrl(item.url);
         return '<div class="history-item">' +
           '<div class="history-row">' +
             '<img class="history-img" src="' + item.image + '" onerror="this.style.visibility=\'hidden\'">' +
@@ -415,7 +416,7 @@
             '</div>' +
             '<div class="history-actions">' +
               '<button class="history-copy" onclick="copyItem(\'' + item.url + '\', this)">コピー</button>' +
-              '<button class="history-graph" onclick="toggleGraph(' + i + ', \'' + (item.folder||'') + '\')">グラフ</button>' +
+              '<button class="history-graph" onclick="toggleGraph(' + i + ', \'' + folder + '\')">グラフ</button>' +
               '<button class="history-del" onclick="deleteHistory(' + i + ')">削除</button>' +
             '</div>' +
           '</div>' +
@@ -431,8 +432,9 @@
       }).join('');
 
       list.forEach(function (item, i) {
-        if (!item.folder) return;
-        fetchStats(item.folder).then(function(s) {
+        var folder = item.folder || folderFromUrl(item.url);
+        if (!folder) return;
+        fetchStats(folder).then(function(s) {
           var ctr = s.pv > 0 ? (s.ct / s.pv * 100).toFixed(1) + '%' : '0.0%';
           var statsEl = document.getElementById('stats-' + i);
           if (statsEl) statsEl.innerHTML =
@@ -447,6 +449,10 @@
 
     var graphData = {};
 
+    function folderFromUrl(url) {
+      return (url || '').replace(/\/$/, '').split('/').pop();
+    }
+
     async function toggleGraph(i, folder) {
       var panel = document.getElementById('chart-panel-' + i);
       if (panel.classList.contains('show')) {
@@ -455,9 +461,20 @@
       }
       panel.classList.add('show');
       if (!folder) return;
-      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
       var stats = await fetchStats(folder);
       graphData[i] = stats;
+      if (stats.pvTimes.length === 0 && stats.ctTimes.length === 0) {
+        var canvas = document.getElementById('chart-' + i);
+        if (canvas) {
+          var ctx2 = canvas.getContext('2d');
+          canvas.height = 40;
+          ctx2.fillStyle = '#484f58';
+          ctx2.font = '13px sans-serif';
+          ctx2.textAlign = 'center';
+          ctx2.fillText('時間別データなし（新しくカードを作成すると表示されます）', canvas.width / 2, 24);
+        }
+        return;
+      }
       drawChart(i, stats, 24);
     }
 
