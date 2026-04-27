@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理画面</title>
+  <title>カード作成</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -13,8 +13,8 @@
       min-height: 100vh;
       padding: 24px 16px;
     }
-    .container { max-width: 560px; margin: 0 auto; }
-    h1 { font-size: 20px; font-weight: bold; margin-bottom: 4px; }
+    .container { max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
     .desc { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
 
     .card {
@@ -24,10 +24,8 @@
       padding: 20px;
       margin-bottom: 16px;
     }
-    .card h2 { font-size: 14px; color: #8b949e; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
-
     label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
-    input, textarea {
+    input {
       width: 100%;
       background: #0d1117;
       border: 1px solid #30363d;
@@ -36,49 +34,33 @@
       padding: 10px 12px;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.2s;
       margin-bottom: 16px;
     }
-    input:focus, textarea:focus { border-color: #58a6ff; }
+    input:focus { border-color: #58a6ff; }
     input[type="password"] { letter-spacing: 2px; }
-    textarea { resize: vertical; min-height: 70px; }
 
-    .preview-wrap { margin-bottom: 16px; }
-    .preview-img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid #30363d;
-      background: #0d1117;
-      display: block;
-    }
-    .preview-placeholder {
-      width: 100%;
-      height: 180px;
-      border-radius: 8px;
+    .drop-area {
       border: 2px dashed #30363d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #8b949e;
-      font-size: 13px;
-    }
-
-    .file-btn {
-      display: inline-block;
-      background: #21262d;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 13px;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
       cursor: pointer;
-      margin-bottom: 16px;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
     }
-    .file-btn:hover { background: #30363d; }
-    #fileInput { display: none; }
+    .drop-area.over { border-color: #58a6ff; background: #0c2233; }
+    .drop-area.has-image { border-color: #238636; border-style: solid; padding: 0; }
+    .drop-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; margin: 0;
+    }
+    .drop-icon { font-size: 36px; margin-bottom: 10px; }
+    .drop-label { font-size: 14px; color: #8b949e; }
+    .drop-sublabel { font-size: 12px; color: #484f58; margin-top: 4px; }
+    .preview-img {
+      width: 100%; border-radius: 10px; display: block; max-height: 240px; object-fit: cover;
+    }
 
-    .save-btn {
+    .btn {
       width: 100%;
       background: #238636;
       color: #fff;
@@ -88,10 +70,9 @@
       font-size: 15px;
       font-weight: bold;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    .save-btn:hover { background: #2ea043; }
-    .save-btn:disabled { background: #21262d; color: #8b949e; cursor: not-allowed; }
+    .btn:hover { background: #2ea043; }
+    .btn:disabled { background: #21262d; color: #8b949e; cursor: not-allowed; }
 
     .status {
       margin-top: 12px;
@@ -100,96 +81,158 @@
       font-size: 13px;
       display: none;
     }
+    .status.loading { background: #0c2233; border: 1px solid #1f6feb; color: #58a6ff; display: block; }
     .status.success { background: #0d2a0d; border: 1px solid #238636; color: #56d364; display: block; }
     .status.error { background: #2d0a0a; border: 1px solid #da3633; color: #f85149; display: block; }
-    .status.loading { background: #0c2233; border: 1px solid #1f6feb; color: #58a6ff; display: block; }
 
-    .toggle-pat {
-      background: none;
-      border: none;
+    .url-box {
+      display: none;
+      margin-top: 16px;
+      background: #0d1117;
+      border: 1px solid #238636;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .url-box.show { display: block; }
+    .url-label { font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+    .url-text {
+      font-size: 13px;
       color: #58a6ff;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+    .copy-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .copy-btn:hover { background: #30363d; }
+
+    .history { margin-top: 8px; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-img {
+      width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0;
+      background: #21262d;
+    }
+    .history-url { font-size: 12px; color: #58a6ff; word-break: break-all; flex: 1; }
+    .history-copy {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 4px 10px;
       font-size: 12px;
       cursor: pointer;
-      margin-left: 8px;
+      flex-shrink: 0;
     }
-    .sep { border: none; border-top: 1px solid #30363d; margin: 16px 0; }
+    .history-copy:hover { background: #30363d; }
+    .no-history { color: #484f58; font-size: 13px; }
+
+    .toggle-pat { background: none; border: none; color: #58a6ff; font-size: 12px; cursor: pointer; margin-left: 6px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎵 カード管理画面</h1>
-    <p class="desc">Twitterカードの設定を変更できます</p>
+    <h1>カード作成</h1>
+    <p class="desc">画像を選ぶだけでツイッター用リンクを生成します</p>
 
-    <!-- GitHub認証 -->
     <div class="card">
-      <h2>GitHub 認証</h2>
-      <label>Personal Access Token <button class="toggle-pat" onclick="togglePat()">表示/非表示</button></label>
+      <label>GitHub Token <button class="toggle-pat" onclick="togglePat()">表示/非表示</button></label>
       <input type="password" id="pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      <p style="font-size:12px;color:#8b949e;margin-top:-12px">
-        <a href="https://github.com/settings/tokens/new?scopes=repo&description=CardAdmin" target="_blank" style="color:#58a6ff">→ トークンを発行する</a>（repo権限が必要）
-      </p>
     </div>
 
-    <!-- カード設定 -->
     <div class="card">
-      <h2>カード設定</h2>
-
-      <label>タイトル</label>
-      <input type="text" id="title" placeholder="TikTok Liteに参加しよう" maxlength="70">
-
-      <label>説明文</label>
-      <textarea id="description" placeholder="今すぐTikTok Liteをはじめよう！" maxlength="200"></textarea>
-
-      <label>リダイレクト先URL</label>
-      <input type="url" id="redirectUrl" placeholder="https://lite.tiktok.com/...">
-    </div>
-
-    <!-- 画像設定 -->
-    <div class="card">
-      <h2>カード画像</h2>
-
-      <div class="preview-wrap" id="previewWrap">
-        <div class="preview-placeholder" id="previewPlaceholder">画像プレビュー</div>
-        <img class="preview-img" id="previewImg" style="display:none" alt="プレビュー">
+      <label>画像をドロップ または タップして選択</label>
+      <div class="drop-area" id="dropArea">
+        <input type="file" id="fileInput" accept="image/*">
+        <div id="dropInner">
+          <div class="drop-icon">🖼️</div>
+          <div class="drop-label">ここに画像をドロップ</div>
+          <div class="drop-sublabel">または タップして選択</div>
+        </div>
+        <img class="preview-img" id="previewImg" style="display:none">
       </div>
-
-      <label>画像URL（外部URLを使う場合）</label>
-      <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" oninput="previewFromUrl(this.value)">
-
-      <div style="text-align:center;margin: -8px 0 16px;color:#8b949e;font-size:12px">または</div>
-
-      <label class="file-btn" for="fileInput">📁 画像ファイルを選択（リポジトリにアップロード）</label>
-      <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(this)">
-      <div id="fileName" style="font-size:12px;color:#8b949e;margin-top:-8px;margin-bottom:16px"></div>
     </div>
 
-    <button class="save-btn" id="saveBtn" onclick="save()">保存して反映する</button>
+    <button class="btn" id="createBtn" onclick="createCard()">リンクを作成する</button>
     <div class="status" id="status"></div>
+
+    <div class="url-box" id="urlBox">
+      <div class="url-label">作成されたURL（ツイートに貼り付け）</div>
+      <div class="url-text" id="urlText"></div>
+      <button class="copy-btn" onclick="copyUrl()">コピー</button>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h2 style="font-size:13px;color:#8b949e;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">作成済み一覧</h2>
+      <div class="history" id="history"></div>
+    </div>
   </div>
 
   <script>
     var REPO_OWNER = 'inofo3';
     var REPO_NAME = 'info';
-    var selectedFile = null;
-    var selectedFileBase64 = null;
+    var REDIRECT_URL = 'https://lite.tiktok.com/t/ZS9NaW828cQ1F-uhRSk/';
 
-    // ページ読み込み時に現在の設定を取得
+    var selectedBase64 = null;
+    var selectedExt = 'jpg';
+
+    // PAT
     window.addEventListener('load', function () {
-      var savedPat = sessionStorage.getItem('gh_pat');
-      if (savedPat) {
-        document.getElementById('pat').value = savedPat;
-        loadCurrentSettings();
-      }
+      var saved = localStorage.getItem('gh_pat');
+      if (saved) document.getElementById('pat').value = saved;
+      renderHistory();
     });
-
     document.getElementById('pat').addEventListener('change', function () {
-      sessionStorage.setItem('gh_pat', this.value);
-      loadCurrentSettings();
+      localStorage.setItem('gh_pat', this.value);
     });
-
     function togglePat() {
       var el = document.getElementById('pat');
       el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    // ドラッグ&ドロップ
+    var dropArea = document.getElementById('dropArea');
+    dropArea.addEventListener('dragover', function (e) { e.preventDefault(); dropArea.classList.add('over'); });
+    dropArea.addEventListener('dragleave', function () { dropArea.classList.remove('over'); });
+    dropArea.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropArea.classList.remove('over');
+      var file = e.dataTransfer.files[0];
+      if (file) loadFile(file);
+    });
+    document.getElementById('fileInput').addEventListener('change', function () {
+      if (this.files[0]) loadFile(this.files[0]);
+    });
+
+    function loadFile(file) {
+      selectedExt = file.name.split('.').pop().toLowerCase() || 'jpg';
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        selectedBase64 = e.target.result.split(',')[1];
+        var img = document.getElementById('previewImg');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('dropInner').style.display = 'none';
+        dropArea.classList.add('has-image');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function generateId() {
+      return Math.random().toString(36).slice(2, 7);
     }
 
     function getHeaders() {
@@ -201,83 +244,11 @@
       };
     }
 
-    // 現在のindex.htmlから設定を読み込む
-    async function loadCurrentSettings() {
-      var pat = document.getElementById('pat').value.trim();
-      if (!pat) return;
-      try {
-        var res = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/index.html', {
-          headers: getHeaders()
-        });
-        if (!res.ok) return;
-        var data = await res.json();
-        var html = atob(data.content.replace(/\n/g, ''));
-
-        var title = extractMeta(html, 'twitter:title');
-        var desc = extractMeta(html, 'twitter:description');
-        var img = extractMeta(html, 'twitter:image');
-        var redirect = extractRedirect(html);
-
-        if (title) document.getElementById('title').value = title;
-        if (desc) document.getElementById('description').value = desc;
-        if (img) { document.getElementById('imageUrl').value = img; previewFromUrl(img); }
-        if (redirect) document.getElementById('redirectUrl').value = redirect;
-      } catch (e) {}
-    }
-
-    function extractMeta(html, name) {
-      var re = new RegExp('<meta\\s+(?:name|property)=["\'](?:twitter:|og:)?' + name.replace('twitter:', '') + '["\']\\s+content=["\']([^"\']*)["\']', 'i');
-      var m = html.match(re);
-      return m ? m[1] : null;
-    }
-
-    function extractRedirect(html) {
-      var m = html.match(/var REDIRECT_URL = '([^']+)'/);
-      return m ? m[1] : null;
-    }
-
-    function previewFromUrl(url) {
-      if (!url) return;
-      var img = document.getElementById('previewImg');
-      var placeholder = document.getElementById('previewPlaceholder');
-      img.src = url;
-      img.style.display = 'block';
-      placeholder.style.display = 'none';
-    }
-
-    function handleFileSelect(input) {
-      var file = input.files[0];
-      if (!file) return;
-      selectedFile = file;
-      document.getElementById('fileName').textContent = '選択: ' + file.name;
-
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        selectedFileBase64 = e.target.result.split(',')[1];
-        previewFromUrl(e.target.result);
-        document.getElementById('imageUrl').value = '';
-      };
-      reader.readAsDataURL(file);
-    }
-
-    async function getFileSha(path) {
-      try {
-        var res = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + path, {
-          headers: getHeaders()
-        });
-        if (!res.ok) return null;
-        var data = await res.json();
-        return data.sha;
-      } catch (e) { return null; }
-    }
-
-    async function pushFile(path, content, message, sha) {
-      var body = { message: message, content: content };
-      if (sha) body.sha = sha;
+    async function pushFile(path, content, message) {
       var res = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + path, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(body)
+        body: JSON.stringify({ message: message, content: content })
       });
       if (!res.ok) {
         var err = await res.json();
@@ -286,144 +257,93 @@
       return await res.json();
     }
 
-    function buildHtml(title, desc, imgUrl, redirectUrl) {
-      return `<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${esc(title)}">
-  <meta name="twitter:description" content="${esc(desc)}">
-  <meta name="twitter:image" content="${esc(imgUrl)}">
-
-  <!-- OGP -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="${esc(title)}">
-  <meta property="og:description" content="${esc(desc)}">
-  <meta property="og:image" content="${esc(imgUrl)}">
-  <meta property="og:url" content="https://${REPO_OWNER}.github.io/${REPO_NAME}/">
-
-  <title>${esc(title)}</title>
-
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #000;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-      padding: 24px;
-    }
-    .icon { font-size: 64px; margin-bottom: 20px; }
-    h1 { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
-    .sub { color: #888; font-size: 14px; margin-bottom: 36px; line-height: 1.6; }
-    .btn {
-      background: linear-gradient(135deg, #ff0050, #ff4081);
-      color: #fff;
-      text-decoration: none;
-      padding: 16px 48px;
-      border-radius: 50px;
-      font-size: 18px;
-      font-weight: bold;
-      display: inline-block;
-      box-shadow: 0 4px 20px rgba(255,0,80,0.4);
-      transition: transform 0.1s;
-    }
-    .btn:active { transform: scale(0.97); }
-    .hint {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #555;
-      line-height: 1.8;
-    }
-    .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid #333;
-      border-top-color: #ff0050;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 24px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <div class="spinner" id="spinner"></div>
-  <div class="icon" id="icon" style="display:none">🎵</div>
-  <h1>${esc(title)}</h1>
-  <p class="sub" id="sub">リダイレクト中...</p>
-
-  <a href="${esc(redirectUrl)}" class="btn" id="openBtn" style="display:none">
-    今すぐ開く
-  </a>
-  <p class="hint" id="hint"></p>
-
-  <script>
-    var REDIRECT_URL = '${redirectUrl}';
-    var ua = navigator.userAgent;
-    var isAndroid = /Android/i.test(ua);
-    var isIOS = /iPhone|iPad|iPod/i.test(ua);
-    var isTwitter = /Twitter/i.test(ua);
-
-    function showFallback(msg) {
-      document.getElementById('spinner').style.display = 'none';
-      document.getElementById('icon').style.display = 'block';
-      document.getElementById('sub').textContent = '以下のボタンをタップしてください';
-      document.getElementById('openBtn').style.display = 'inline-block';
-      document.getElementById('hint').innerHTML = msg || '';
+    function buildHtml(imageUrl) {
+      return '<!DOCTYPE html>\n' +
+'<html lang="ja">\n' +
+'<head>\n' +
+'  <meta charset="UTF-8">\n' +
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'  <meta name="twitter:card" content="summary_large_image">\n' +
+'  <meta name="twitter:title" content="ー速報ーYahoo!ニュース">\n' +
+'  <meta name="twitter:image" content="' + imageUrl + '">\n' +
+'  <title>Yahoo!ニュースに接続中</title>\n' +
+'  <style>\n' +
+'    * { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+'    body { background: #fff; color: #000; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 24px; }\n' +
+'    h1 { font-size: 22px; font-weight: bold; margin-bottom: 10px; }\n' +
+'    .sub { color: #555; font-size: 14px; line-height: 1.8; margin-bottom: 4px; }\n' +
+'    .sub-hint { color: #e00; font-size: 13px; line-height: 1.8; min-height: 20px; }\n' +
+'    .spinner { width: 32px; height: 32px; border: 3px solid #ddd; border-top-color: #ff0050; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 24px; }\n' +
+'    @keyframes spin { to { transform: rotate(360deg); } }\n' +
+'    .btn-wrap { margin-top: 36px; opacity: 0; transform: translateY(12px); transition: opacity 0.6s ease, transform 0.6s ease; }\n' +
+'    .btn-wrap.show { opacity: 1; transform: translateY(0); }\n' +
+'    .btn { display: inline-block; background: linear-gradient(135deg, #ff0050, #ff4081); color: #fff; text-decoration: none; padding: 18px 36px; border-radius: 50px; font-size: 17px; font-weight: bold; box-shadow: 0 4px 20px rgba(255,0,80,0.4); }\n' +
+'  </style>\n' +
+'</head>\n' +
+'<body>\n' +
+'  <div class="spinner"></div>\n' +
+'  <h1>リダイレクト中...</h1>\n' +
+'  <p class="sub">接続しています。少々お待ちください</p>\n' +
+'  <p class="sub-hint" id="hint"></p>\n' +
+'  <div class="btn-wrap" id="btnWrap">\n' +
+'    <a href="' + REDIRECT_URL + '" class="btn">開かない場合はこちらをタップ</a>\n' +
+'  </div>\n' +
+'  <script>\n' +
+'    setTimeout(function () {\n' +
+'      document.getElementById("hint").textContent = "自動で開かない場合は下のボタンからお進みください";\n' +
+'      document.getElementById("btnWrap").classList.add("show");\n' +
+'    }, 1000);\n' +
+'  <\/script>\n' +
+'</body>\n' +
+'</html>';
     }
 
-    function doRedirect() {
-      if (isAndroid) {
-        var intentUrl = 'intent://' + REDIRECT_URL.replace(/^https?:\\/\\//, '') +
-          '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
-          encodeURIComponent(REDIRECT_URL) + ';end';
-        window.location.href = intentUrl;
-        setTimeout(function () {
-          showFallback('ブラウザが開かない場合は下のボタンをタップ');
-        }, 2000);
-      } else if (isIOS && isTwitter) {
-        var newWin = window.open(REDIRECT_URL, '_blank');
-        if (newWin) {
-          setTimeout(function () { newWin.focus(); }, 100);
-          showFallback('');
-        } else {
-          showFallback('ボタンを<strong>長押し</strong>→「Safariで開く」をタップ');
-        }
-      } else {
-        window.location.href = REDIRECT_URL;
+    async function createCard() {
+      var pat = document.getElementById('pat').value.trim();
+      if (!pat) { setStatus('error', 'GitHub Tokenを入力してください'); return; }
+      if (!selectedBase64) { setStatus('error', '画像を選択してください'); return; }
+
+      var btn = document.getElementById('createBtn');
+      btn.disabled = true;
+
+      var folder = generateId();
+      var imagePath = folder + '/card.' + selectedExt;
+      var htmlPath = folder + '/index.html';
+      var imageUrl = 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/' + imagePath;
+      var pageUrl = 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/' + folder + '/';
+
+      try {
+        setStatus('loading', '画像をアップロード中...');
+        await pushFile(imagePath, selectedBase64, 'add card ' + folder);
+
+        setStatus('loading', 'ページを作成中...');
+        var html = buildHtml(imageUrl);
+        var encoded = btoa(unescape(encodeURIComponent(html)));
+        await pushFile(htmlPath, encoded, 'add page ' + folder);
+
+        setStatus('success', '✅ 作成完了！GitHub Pagesに反映まで1〜2分かかります。');
+        showUrl(pageUrl, imageUrl);
+        saveHistory(pageUrl, imageUrl);
+        renderHistory();
+      } catch (e) {
+        setStatus('error', '❌ ' + e.message);
+      } finally {
+        btn.disabled = false;
       }
     }
 
-    setTimeout(doRedirect, 500);
-
-    document.getElementById('openBtn').addEventListener('click', function (e) {
-      e.preventDefault();
-      if (isAndroid) {
-        var intentUrl = 'intent://' + REDIRECT_URL.replace(/^https?:\\/\\//, '') +
-          '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
-          encodeURIComponent(REDIRECT_URL) + ';end';
-        window.location.href = intentUrl;
-        setTimeout(function () { window.location.href = REDIRECT_URL; }, 2000);
-      } else {
-        window.open(REDIRECT_URL, '_blank') || (window.location.href = REDIRECT_URL);
-      }
-    });
-  <\/script>
-</body>
-</html>`;
+    function showUrl(url, imageUrl) {
+      document.getElementById('urlText').textContent = url;
+      document.getElementById('urlBox').classList.add('show');
     }
 
-    function esc(str) {
-      return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function copyUrl() {
+      var text = document.getElementById('urlText').textContent;
+      navigator.clipboard.writeText(text).then(function () {
+        var btn = document.querySelector('.copy-btn');
+        btn.textContent = 'コピーしました！';
+        setTimeout(function () { btn.textContent = 'コピー'; }, 2000);
+      });
     }
 
     function setStatus(type, msg) {
@@ -432,51 +352,26 @@
       el.textContent = msg;
     }
 
-    async function save() {
-      var pat = document.getElementById('pat').value.trim();
-      if (!pat) { setStatus('error', 'Personal Access Tokenを入力してください'); return; }
+    function saveHistory(url, imageUrl) {
+      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
+      list.unshift({ url: url, image: imageUrl, date: Date.now() });
+      localStorage.setItem('card_history', JSON.stringify(list.slice(0, 30)));
+    }
 
-      var title = document.getElementById('title').value.trim() || 'TikTok Liteに参加しよう';
-      var desc = document.getElementById('description').value.trim() || '今すぐTikTok Liteをはじめよう！';
-      var redirectUrl = document.getElementById('redirectUrl').value.trim() || 'https://lite.tiktok.com/t/ZS9N2FKHQ15Pd-NM1zm/';
-      var imageUrl = document.getElementById('imageUrl').value.trim();
-
-      var btn = document.getElementById('saveBtn');
-      btn.disabled = true;
-      setStatus('loading', '保存中...');
-
-      try {
-        // 1. 画像ファイルがある場合はアップロード
-        if (selectedFileBase64 && selectedFile) {
-          setStatus('loading', '画像をアップロード中...');
-          var ext = selectedFile.name.split('.').pop().toLowerCase();
-          var imgPath = 'card.' + ext;
-          var imgSha = await getFileSha(imgPath);
-          await pushFile(imgPath, selectedFileBase64, 'update card image', imgSha);
-          imageUrl = 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/' + imgPath;
-          document.getElementById('imageUrl').value = imageUrl;
-          selectedFile = null;
-          selectedFileBase64 = null;
-          document.getElementById('fileName').textContent = '';
-        }
-
-        if (!imageUrl) {
-          imageUrl = 'https://' + REPO_OWNER + '.github.io/' + REPO_NAME + '/card.jpg';
-        }
-
-        // 2. index.html を更新
-        setStatus('loading', 'index.html を更新中...');
-        var newHtml = buildHtml(title, desc, imageUrl, redirectUrl);
-        var encoded = btoa(unescape(encodeURIComponent(newHtml)));
-        var sha = await getFileSha('index.html');
-        await pushFile('index.html', encoded, 'update card settings', sha);
-
-        setStatus('success', '✅ 保存しました！GitHub Pagesに反映されるまで1〜2分かかります。');
-      } catch (e) {
-        setStatus('error', '❌ エラー: ' + e.message);
-      } finally {
-        btn.disabled = false;
+    function renderHistory() {
+      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
+      var el = document.getElementById('history');
+      if (list.length === 0) {
+        el.innerHTML = '<div class="no-history">まだ作成したカードはありません</div>';
+        return;
       }
+      el.innerHTML = list.map(function (item) {
+        return '<div class="history-item">' +
+          '<img class="history-img" src="' + item.image + '" onerror="this.style.visibility=\'hidden\'">' +
+          '<div class="history-url">' + item.url + '</div>' +
+          '<button class="history-copy" onclick="navigator.clipboard.writeText(\'' + item.url + '\').then(function(){ this.textContent=\'コピー済\'; }.bind(this))">コピー</button>' +
+          '</div>';
+      }).join('');
     }
   </script>
 </body>
