@@ -95,12 +95,7 @@
     }
     .url-box.show { display: block; }
     .url-label { font-size: 12px; color: #8b949e; margin-bottom: 6px; }
-    .url-text {
-      font-size: 13px;
-      color: #58a6ff;
-      word-break: break-all;
-      margin-bottom: 10px;
-    }
+    .url-text { font-size: 13px; color: #58a6ff; word-break: break-all; margin-bottom: 10px; }
     .copy-btn {
       background: #21262d;
       border: 1px solid #30363d;
@@ -113,7 +108,24 @@
     }
     .copy-btn:hover { background: #30363d; }
 
-    .history { margin-top: 8px; }
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .history-header h2 { font-size: 13px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+    .refresh-btn {
+      background: none;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .refresh-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+
     .history-item {
       display: flex;
       align-items: center;
@@ -126,18 +138,25 @@
       width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0;
       background: #21262d;
     }
-    .history-url { font-size: 12px; color: #58a6ff; word-break: break-all; flex: 1; }
-    .history-copy {
-      background: #21262d;
+    .history-info { flex: 1; min-width: 0; }
+    .history-url { font-size: 12px; color: #58a6ff; word-break: break-all; }
+    .pv-badge {
+      font-size: 11px;
+      color: #56d364;
+      margin-top: 4px;
+    }
+    .history-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .history-copy, .history-del {
       border: 1px solid #30363d;
-      color: #e6edf3;
       border-radius: 6px;
       padding: 4px 10px;
       font-size: 12px;
       cursor: pointer;
-      flex-shrink: 0;
     }
+    .history-copy { background: #21262d; color: #e6edf3; }
     .history-copy:hover { background: #30363d; }
+    .history-del { background: none; color: #8b949e; }
+    .history-del:hover { border-color: #da3633; color: #f85149; }
     .no-history { color: #484f58; font-size: 13px; }
 
     .toggle-pat { background: none; border: none; color: #58a6ff; font-size: 12px; cursor: pointer; margin-left: 6px; }
@@ -191,8 +210,11 @@
     </div>
 
     <div class="card" style="margin-top:8px">
-      <h2 style="font-size:13px;color:#8b949e;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">作成済み一覧</h2>
-      <div class="history" id="history"></div>
+      <div class="history-header">
+        <h2>作成済み一覧</h2>
+        <button class="refresh-btn" onclick="renderHistory()">更新</button>
+      </div>
+      <div id="history"></div>
     </div>
   </div>
 
@@ -200,11 +222,11 @@
     var REPO_OWNER = 'inofo3';
     var REPO_NAME = 'info';
     var REDIRECT_URL = 'https://lite.tiktok.com/t/ZS9NaW828cQ1F-uhRSk/';
+    var DB = 'https://counter-e0c21-default-rtdb.firebaseio.com';
 
     var selectedBase64 = null;
     var selectedExt = 'jpg';
 
-    // PAT
     window.addEventListener('load', function () {
       var saved = localStorage.getItem('gh_pat');
       if (saved) document.getElementById('pat').value = saved;
@@ -218,7 +240,6 @@
       el.type = el.type === 'password' ? 'text' : 'password';
     }
 
-    // ドラッグ&ドロップ
     var dropArea = document.getElementById('dropArea');
     dropArea.addEventListener('dragover', function (e) { e.preventDefault(); dropArea.classList.add('over'); });
     dropArea.addEventListener('dragleave', function () { dropArea.classList.remove('over'); });
@@ -272,7 +293,7 @@
       return await res.json();
     }
 
-    function buildHtml(imageUrl, title, desc) {
+    function buildHtml(imageUrl, title, desc, folder) {
       var t = title || 'ー速報ーYahoo!ニュース';
       var d = desc || '';
       return '<!DOCTYPE html>\n' +
@@ -307,6 +328,7 @@
 '    <a href="' + REDIRECT_URL + '" class="btn">開かない場合はこちらをタップ</a>\n' +
 '  </div>\n' +
 '  <script>\n' +
+'    (function(){var db="https://counter-e0c21-default-rtdb.firebaseio.com/counts/' + folder + '.json";fetch(db).then(function(r){return r.json();}).then(function(v){fetch(db,{method:"PUT",body:JSON.stringify((v||0)+1)});});})();\n' +
 '    setTimeout(function () {\n' +
 '      document.getElementById("hint").textContent = "自動で開かない場合は下のボタンからお進みください";\n' +
 '      document.getElementById("btnWrap").classList.add("show");\n' +
@@ -337,13 +359,16 @@
         setStatus('loading', 'ページを作成中...');
         var title = document.getElementById('cardTitle').value.trim();
         var desc = document.getElementById('cardDesc').value.trim();
-        var html = buildHtml(imageUrl, title, desc);
+        var html = buildHtml(imageUrl, title, desc, folder);
         var encoded = btoa(unescape(encodeURIComponent(html)));
         await pushFile(htmlPath, encoded, 'add page ' + folder);
 
+        // カウンター初期化
+        await fetch(DB + '/counts/' + folder + '.json', { method: 'PUT', body: JSON.stringify(0) });
+
         setStatus('success', '✅ 作成完了！GitHub Pagesに反映まで1〜2分かかります。');
-        showUrl(pageUrl, imageUrl);
-        saveHistory(pageUrl, imageUrl);
+        showUrl(pageUrl);
+        saveHistory(pageUrl, imageUrl, folder);
         renderHistory();
       } catch (e) {
         setStatus('error', '❌ ' + e.message);
@@ -352,7 +377,7 @@
       }
     }
 
-    function showUrl(url, imageUrl) {
+    function showUrl(url) {
       document.getElementById('urlText').textContent = url;
       document.getElementById('urlBox').classList.add('show');
     }
@@ -372,10 +397,66 @@
       el.textContent = msg;
     }
 
-    function saveHistory(url, imageUrl) {
+    function saveHistory(url, imageUrl, folder) {
       var list = JSON.parse(localStorage.getItem('card_history') || '[]');
-      list.unshift({ url: url, image: imageUrl, date: Date.now() });
+      list.unshift({ url: url, image: imageUrl, folder: folder, date: Date.now() });
       localStorage.setItem('card_history', JSON.stringify(list.slice(0, 30)));
+    }
+
+    function deleteHistory(index) {
+      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
+      list.splice(index, 1);
+      localStorage.setItem('card_history', JSON.stringify(list));
+      renderHistory();
+    }
+
+    async function renderHistory() {
+      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
+      var el = document.getElementById('history');
+      if (list.length === 0) {
+        el.innerHTML = '<div class="no-history">まだ作成したカードはありません</div>';
+        return;
+      }
+
+      el.innerHTML = list.map(function (item, i) {
+        return '<div class="history-item">' +
+          '<img class="history-img" src="' + item.image + '" onerror="this.style.visibility=\'hidden\'">' +
+          '<div class="history-info">' +
+            '<div class="history-url">' + item.url + '</div>' +
+            '<div class="pv-badge" id="pv-' + i + '">読込中...</div>' +
+          '</div>' +
+          '<div class="history-actions">' +
+            '<button class="history-copy" onclick="copyItem(\'' + item.url + '\', this)">コピー</button>' +
+            '<button class="history-del" onclick="deleteHistory(' + i + ')">削除</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      // PV取得
+      list.forEach(function (item, i) {
+        if (!item.folder) {
+          var pvEl = document.getElementById('pv-' + i);
+          if (pvEl) pvEl.textContent = '';
+          return;
+        }
+        fetch(DB + '/counts/' + item.folder + '.json')
+          .then(function (r) { return r.json(); })
+          .then(function (v) {
+            var pvEl = document.getElementById('pv-' + i);
+            if (pvEl) pvEl.textContent = (v || 0) + ' PV';
+          })
+          .catch(function () {
+            var pvEl = document.getElementById('pv-' + i);
+            if (pvEl) pvEl.textContent = '- PV';
+          });
+      });
+    }
+
+    function copyItem(url, btn) {
+      navigator.clipboard.writeText(url).then(function () {
+        btn.textContent = 'コピー済';
+        setTimeout(function () { btn.textContent = 'コピー'; }, 2000);
+      });
     }
 
     async function saveRootTitle() {
@@ -423,22 +504,6 @@
       var el = document.getElementById('rootStatus');
       el.className = 'status ' + type;
       el.textContent = msg;
-    }
-
-    function renderHistory() {
-      var list = JSON.parse(localStorage.getItem('card_history') || '[]');
-      var el = document.getElementById('history');
-      if (list.length === 0) {
-        el.innerHTML = '<div class="no-history">まだ作成したカードはありません</div>';
-        return;
-      }
-      el.innerHTML = list.map(function (item) {
-        return '<div class="history-item">' +
-          '<img class="history-img" src="' + item.image + '" onerror="this.style.visibility=\'hidden\'">' +
-          '<div class="history-url">' + item.url + '</div>' +
-          '<button class="history-copy" onclick="navigator.clipboard.writeText(\'' + item.url + '\').then(function(){ this.textContent=\'コピー済\'; }.bind(this))">コピー</button>' +
-          '</div>';
-      }).join('');
     }
   </script>
 </body>
