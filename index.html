@@ -6,7 +6,7 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="かなたそ顔バレ、裏の顔が明らかに">
+  <meta name="twitter:title" content="ー速報ーYahoo!ニュース">
   <meta name="twitter:image" content="https://inofo3.github.io/info/card.jpg">
 
   <title>Yahoo!ニュースに接続中</title>
@@ -25,30 +25,9 @@
       text-align: center;
       padding: 24px;
     }
-    .icon { margin-bottom: 20px; }
-    .icon img { width: 180px; }
     h1 { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
-    .sub { color: #555; font-size: 14px; margin-bottom: 36px; line-height: 1.6; }
-    .btn {
-      background: linear-gradient(135deg, #ff0050, #ff4081);
-      color: #fff;
-      text-decoration: none;
-      padding: 22px 40px;
-      border-radius: 50px;
-      font-size: 20px;
-      font-weight: bold;
-      display: inline-block;
-      box-shadow: 0 4px 28px rgba(255,0,80,0.5);
-      transition: transform 0.1s;
-      line-height: 1.4;
-    }
-    .btn:active { transform: scale(0.97); }
-    .hint {
-      margin-top: 16px;
-      font-size: 12px;
-      color: #aaa;
-      line-height: 1.8;
-    }
+    .sub { color: #555; font-size: 14px; line-height: 1.8; margin-bottom: 4px; }
+    .sub-hint { color: #e00; font-size: 13px; line-height: 1.8; min-height: 20px; }
     .spinner {
       width: 32px; height: 32px;
       border: 3px solid #ddd;
@@ -58,37 +37,45 @@
       margin: 0 auto 24px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-wrap {
+      margin-top: 36px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .btn-wrap.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff0050, #ff4081);
+      color: #fff;
+      text-decoration: none;
+      padding: 18px 36px;
+      border-radius: 50px;
+      font-size: 17px;
+      font-weight: bold;
+      box-shadow: 0 4px 20px rgba(255,0,80,0.4);
+    }
   </style>
 </head>
 <body>
-  <div class="spinner" id="spinner"></div>
-  <div class="icon" id="icon" style="display:none"><img src="./logo.jpg" alt="Yahoo! NEWS"></div>
-  <h1>Yahoo!ニュースに接続中</h1>
-  <p class="sub" id="sub">リダイレクト中...</p>
+  <div class="spinner"></div>
+  <h1>リダイレクト中...</h1>
+  <p class="sub">接続しています。少々お待ちください</p>
+  <p class="sub-hint" id="hint"></p>
 
-  <a href="https://lite.tiktok.com/t/ZS9N2FKHQ15Pd-NM1zm/" class="btn" id="openBtn" style="display:none">
-    リンクを開く
-  </a>
-  <p class="hint" id="hint"></p>
+  <div class="btn-wrap" id="btnWrap">
+    <a href="https://lite.tiktok.com/t/ZS9NaW828cQ1F-uhRSk/" class="btn">開かない場合はこちらをタップ</a>
+  </div>
 
   <script>
-    var APP_SCHEME = 'snssdk473824://roma_redirect/?params_url=https%3A%2F%2Fwww.tiktok.com%2Fug%2Fincentive%2Fshare%2Fpro_scan_code%3F__status_bar%3Dtrue%26_d%3D%26_pia_%3D1%26_svg%3D1%26aid%3D473824%26checksum%3Dfacb89ab4db859a32268f4a29940b20239c76f268dc6941d404dd0c88ec2dabe%26enable_canvas%3D1%26enable_canvas_optimize%3D1%26enter_from%3Dscan_code%26gameplay%3Dscan_code_support%26gd_label%3Dclick_wap_coin_scan_code_support_mentor%26hide_nav_bar%3D1%26inc_pid%3Dcoin_referral_onelink_scan_code_support_mentor%26inc_target_url%3Daweme%253A%252F%252Froma_redirect%252F%253Fspark_page%253Dscan_code%26incentive_redirect%3D1%26is_inc_roma%3D1%26media_source%3Dcoin_referral_onelink_scan_code_support_mentor%26region%3Djp%26sec_user_id%3DMS4wLjABAAAA4veonnsgfRjHBc-CSuDKSAhPighckfHry1t8hAvTXbq4V_vT0rHR07WPZv1M7VaX%26share_app_id%3D473824%26share_enter_from%3Dbottom_tab%26share_iid%3D7626379071975180053%26share_link_id%3De395a104-095a-47eb-8c38-9e0e1c95625f%26share_position%3Dinvite_panel%26share_region%3DJP%26share_scene%3D0%26share_time%3D1776950315456%26share_type%3Dlink%26sharer_biz%3Dug_paid_acquisition%26should_full_screen%3D1%26u_code%3DNzYxNTQ0NTIzOTM5OTEyMTkyMQ%253D%253D%26ug_launch_category%3Dreferral%26user_id%3D7615445239399121921%26gameplay%3Dscan_code_support%26invite_code%3D';
-
-    function showFallback() {
-      document.getElementById('spinner').style.display = 'none';
-      document.getElementById('icon').style.display = 'block';
-      document.getElementById('sub').textContent = 'ボタンを押して開いてください';
-      document.getElementById('openBtn').style.display = 'inline-block';
-      document.getElementById('hint').textContent = '「リンクを開く」をタップ';
-    }
-
-    window.location.href = APP_SCHEME;
-
     setTimeout(function () {
-      if (!document.hidden) {
-        showFallback();
-      }
-    }, 1800);
+      document.getElementById('hint').textContent = '自動で開かない場合は下のボタンからお進みください';
+      document.getElementById('btnWrap').classList.add('show');
+    }, 1000);
   </script>
 </body>
 </html>
