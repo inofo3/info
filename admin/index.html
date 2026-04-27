@@ -154,6 +154,13 @@
     </div>
 
     <div class="card">
+      <label>カードタイトル</label>
+      <input type="text" id="cardTitle" placeholder="ー速報ーYahoo!ニュース" maxlength="70">
+      <label>説明文（任意）</label>
+      <input type="text" id="cardDesc" placeholder="続きはこちら..." maxlength="200">
+    </div>
+
+    <div class="card">
       <label>画像をドロップ または タップして選択</label>
       <div class="drop-area" id="dropArea">
         <input type="file" id="fileInput" accept="image/*">
@@ -176,6 +183,14 @@
     </div>
 
     <div class="card" style="margin-top:24px">
+      <h2 style="font-size:13px;color:#8b949e;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">トップページのカード文言</h2>
+      <label>twitter:title</label>
+      <input type="text" id="rootTitle" placeholder="ー速報ーYahoo!ニュース" maxlength="70">
+      <button class="btn" id="rootSaveBtn" onclick="saveRootTitle()" style="margin-top:4px">保存する</button>
+      <div class="status" id="rootStatus"></div>
+    </div>
+
+    <div class="card" style="margin-top:8px">
       <h2 style="font-size:13px;color:#8b949e;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">作成済み一覧</h2>
       <div class="history" id="history"></div>
     </div>
@@ -257,14 +272,17 @@
       return await res.json();
     }
 
-    function buildHtml(imageUrl) {
+    function buildHtml(imageUrl, title, desc) {
+      var t = title || 'ー速報ーYahoo!ニュース';
+      var d = desc || '';
       return '<!DOCTYPE html>\n' +
 '<html lang="ja">\n' +
 '<head>\n' +
 '  <meta charset="UTF-8">\n' +
 '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
 '  <meta name="twitter:card" content="summary_large_image">\n' +
-'  <meta name="twitter:title" content="ー速報ーYahoo!ニュース">\n' +
+'  <meta name="twitter:title" content="' + t.replace(/"/g,'&quot;') + '">\n' +
+(d ? '  <meta name="twitter:description" content="' + d.replace(/"/g,'&quot;') + '">\n' : '') +
 '  <meta name="twitter:image" content="' + imageUrl + '">\n' +
 '  <title>Yahoo!ニュースに接続中</title>\n' +
 '  <style>\n' +
@@ -317,7 +335,9 @@
         await pushFile(imagePath, selectedBase64, 'add card ' + folder);
 
         setStatus('loading', 'ページを作成中...');
-        var html = buildHtml(imageUrl);
+        var title = document.getElementById('cardTitle').value.trim();
+        var desc = document.getElementById('cardDesc').value.trim();
+        var html = buildHtml(imageUrl, title, desc);
         var encoded = btoa(unescape(encodeURIComponent(html)));
         await pushFile(htmlPath, encoded, 'add page ' + folder);
 
@@ -356,6 +376,53 @@
       var list = JSON.parse(localStorage.getItem('card_history') || '[]');
       list.unshift({ url: url, image: imageUrl, date: Date.now() });
       localStorage.setItem('card_history', JSON.stringify(list.slice(0, 30)));
+    }
+
+    async function saveRootTitle() {
+      var pat = document.getElementById('pat').value.trim();
+      if (!pat) { setRootStatus('error', 'GitHub Tokenを入力してください'); return; }
+      var title = document.getElementById('rootTitle').value.trim();
+      if (!title) { setRootStatus('error', 'タイトルを入力してください'); return; }
+
+      var btn = document.getElementById('rootSaveBtn');
+      btn.disabled = true;
+      setRootStatus('loading', '取得中...');
+
+      try {
+        var res = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/index.html', {
+          headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('index.html の取得に失敗しました');
+        var data = await res.json();
+        var html = atob(data.content.replace(/\n/g, ''));
+
+        html = html.replace(
+          /(<meta\s+name="twitter:title"\s+content=")[^"]*(")/,
+          '$1' + title.replace(/"/g, '&quot;') + '$2'
+        );
+
+        var encoded = btoa(unescape(encodeURIComponent(html)));
+        var updateRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/index.html', {
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify({ message: 'update twitter:title', content: encoded, sha: data.sha })
+        });
+        if (!updateRes.ok) {
+          var err = await updateRes.json();
+          throw new Error(err.message || 'GitHub API エラー');
+        }
+        setRootStatus('success', '✅ 保存しました！反映まで1〜2分かかります。');
+      } catch (e) {
+        setRootStatus('error', '❌ ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function setRootStatus(type, msg) {
+      var el = document.getElementById('rootStatus');
+      el.className = 'status ' + type;
+      el.textContent = msg;
     }
 
     function renderHistory() {
