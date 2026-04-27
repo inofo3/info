@@ -140,6 +140,16 @@
     }
     .history-info { flex: 1; min-width: 0; }
     .history-url { font-size: 12px; color: #58a6ff; word-break: break-all; }
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .stat { font-size: 11px; }
+    .stat-label { color: #484f58; }
+    .stat-pv { color: #56d364; }
+    .stat-ct { color: #58a6ff; }
+    .stat-ctr { color: #e3b341; }
     .pv-badge {
       font-size: 11px;
       color: #56d364;
@@ -328,7 +338,14 @@
 '    <a href="' + REDIRECT_URL + '" class="btn">開かない場合はこちらをタップ</a>\n' +
 '  </div>\n' +
 '  <script>\n' +
-'    (function(){var db="https://counter-e0c21-default-rtdb.firebaseio.com/counts/' + folder + '.json";fetch(db).then(function(r){return r.json();}).then(function(v){fetch(db,{method:"PUT",body:JSON.stringify((v||0)+1)});});})();\n' +
+'    (function(){\n' +
+'      var h={"Content-Type":"application/json"};\n' +
+'      var base="https://counter-e0c21-default-rtdb.firebaseio.com/counts/' + folder + '";\n' +
+'      fetch(base+"/pv.json").then(function(r){return r.json();}).then(function(v){fetch(base+"/pv.json",{method:"PUT",headers:h,body:JSON.stringify((typeof v==="number"?v:0)+1)});});\n' +
+'      document.getElementById("btnWrap").querySelector("a").addEventListener("click",function(){\n' +
+'        fetch(base+"/ct.json").then(function(r){return r.json();}).then(function(v){fetch(base+"/ct.json",{method:"PUT",headers:h,body:JSON.stringify((typeof v==="number"?v:0)+1)});});\n' +
+'      });\n' +
+'    })();\n' +
 '    setTimeout(function () {\n' +
 '      document.getElementById("hint").textContent = "自動で開かない場合は下のボタンからお進みください";\n' +
 '      document.getElementById("btnWrap").classList.add("show");\n' +
@@ -364,7 +381,9 @@
         await pushFile(htmlPath, encoded, 'add page ' + folder);
 
         // カウンター初期化
-        await fetch(DB + '/counts/' + folder + '.json', { method: 'PUT', body: JSON.stringify(0) });
+        var initHeaders = { 'Content-Type': 'application/json' };
+        await fetch(DB + '/counts/' + folder + '/pv.json', { method: 'PUT', headers: initHeaders, body: JSON.stringify(0) });
+        await fetch(DB + '/counts/' + folder + '/ct.json', { method: 'PUT', headers: initHeaders, body: JSON.stringify(0) });
 
         setStatus('success', '✅ 作成完了！GitHub Pagesに反映まで1〜2分かかります。');
         showUrl(pageUrl);
@@ -423,7 +442,11 @@
           '<img class="history-img" src="' + item.image + '" onerror="this.style.visibility=\'hidden\'">' +
           '<div class="history-info">' +
             '<div class="history-url">' + item.url + '</div>' +
-            '<div class="pv-badge" id="pv-' + i + '">読込中...</div>' +
+            '<div class="stats" id="stats-' + i + '">' +
+              '<span class="stat stat-pv">PV: -</span>' +
+              '<span class="stat stat-ct">CT: -</span>' +
+              '<span class="stat stat-ctr">CTR: -</span>' +
+            '</div>' +
           '</div>' +
           '<div class="history-actions">' +
             '<button class="history-copy" onclick="copyItem(\'' + item.url + '\', this)">コピー</button>' +
@@ -432,23 +455,25 @@
           '</div>';
       }).join('');
 
-      // PV取得
+      // PV/CT取得
       list.forEach(function (item, i) {
-        if (!item.folder) {
-          var pvEl = document.getElementById('pv-' + i);
-          if (pvEl) pvEl.textContent = '';
-          return;
-        }
-        fetch(DB + '/counts/' + item.folder + '.json')
-          .then(function (r) { return r.json(); })
-          .then(function (v) {
-            var pvEl = document.getElementById('pv-' + i);
-            if (pvEl) pvEl.textContent = (v || 0) + ' PV';
-          })
-          .catch(function () {
-            var pvEl = document.getElementById('pv-' + i);
-            if (pvEl) pvEl.textContent = '- PV';
-          });
+        if (!item.folder) return;
+        Promise.all([
+          fetch(DB + '/counts/' + item.folder + '/pv.json').then(function(r){ return r.json(); }),
+          fetch(DB + '/counts/' + item.folder + '/ct.json').then(function(r){ return r.json(); })
+        ]).then(function(results) {
+          var pv = typeof results[0] === 'number' ? results[0] : 0;
+          var ct = typeof results[1] === 'number' ? results[1] : 0;
+          var ctr = pv > 0 ? (ct / pv * 100).toFixed(1) + '%' : '0.0%';
+          var el = document.getElementById('stats-' + i);
+          if (el) el.innerHTML =
+            '<span class="stat stat-pv">PV: ' + pv + '</span>' +
+            '<span class="stat stat-ct">CT: ' + ct + '</span>' +
+            '<span class="stat stat-ctr">CTR: ' + ctr + '</span>';
+        }).catch(function() {
+          var el = document.getElementById('stats-' + i);
+          if (el) el.innerHTML = '<span class="stat">取得失敗</span>';
+        });
       });
     }
 
