@@ -353,11 +353,21 @@
     }
 
     async function fetchStats(folder) {
-      var data = await fetch(DB + '/visits/' + folder + '.json').then(function(r){ return r.json(); });
-      if (!data) return { pv: 0, ct: 0, pvTimes: [], ctTimes: [] };
-      var pvTimes = data.pv ? Object.values(data.pv).map(function(v){ return v.t; }) : [];
-      var ctTimes = data.ct ? Object.values(data.ct).map(function(v){ return v.t; }) : [];
-      return { pv: pvTimes.length, ct: ctTimes.length, pvTimes: pvTimes, ctTimes: ctTimes };
+      // 新形式: /visits/（タイムスタンプ）
+      var visits = await fetch(DB + '/visits/' + folder + '.json').then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if (visits && (visits.pv || visits.ct)) {
+        var pvTimes = visits.pv ? Object.values(visits.pv).map(function(v){ return v.t; }) : [];
+        var ctTimes = visits.ct ? Object.values(visits.ct).map(function(v){ return v.t; }) : [];
+        return { pv: pvTimes.length, ct: ctTimes.length, pvTimes: pvTimes, ctTimes: ctTimes };
+      }
+      // 旧形式: /counts/（数字）
+      var counts = await fetch(DB + '/counts/' + folder + '.json').then(function(r){ return r.json(); }).catch(function(){ return null; });
+      if (counts) {
+        var pv = typeof counts.pv === 'number' ? counts.pv : 0;
+        var ct = typeof counts.ct === 'number' ? counts.ct : 0;
+        return { pv: pv, ct: ct, pvTimes: [], ctTimes: [] };
+      }
+      return { pv: 0, ct: 0, pvTimes: [], ctTimes: [] };
     }
 
     function hourlyBuckets(times, hours) {
